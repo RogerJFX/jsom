@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+		<title>Title</title>
+	
+		<script type="text/javascript" src="./js/JSom.class.js" ></script>
+		<script type="text/javascript" src="./js/jquery-1.11.0.js" ></script>
+		<script>
+			// First we create an additional function (Jsom)
+			jsom.addNodeFunction("myAddedFunction", function() {
+				// Setting some style using jsom node
+				this.style({"font-weight": "bold"});
+				// Setting some style using the html element
+				this.elem.style.textDecoration="underline";
+				// onclick
+				this.elem.onclick=function() {
+					alert("You just clicked that div");
+				};
+				// Ok, maybe we should add "click" asf. to JSom
+				this.elem.addEventListener("click", function(){
+					alert("You just clicked that div 2");},
+				false);
+			});
+			// Same with jQuery
+			jQuery.fn.myAddedFunctionJQ = function() {
+				//alert($(this[0]));
+				$(this[0]).css({"font-weight": "bold"});
+				this[0].style.textDecoration="underline";
+				$(this[0]).click(function(){
+					alert("You just clicked that div")
+				});
+				$(this[0]).click(function(){
+					alert("You just clicked that div 2")
+				});
+			}
+			// ##############################################
+			// ##############################################
+			Utils.addEventListener(window, "load", function() {
+				alert("starting JSom actions");
+				// Calling the added function
+				jsom.node("#myJSom").myAddedFunction();
+				// Append an Element to body
+				var helloNode = jsom.append({'tag':'div','html':'Hello JSom','parent':document.body});
+				// Append an Element to JSom node.
+				jsom.append({'tag':'span','html':', we add just this to you','parent':helloNode});
+				//Print out the helper string.
+				console.log(jsom.arg.toString());
+				// Creating a simple bean.
+				var bean = jsom.arg.bean({tag:"a", html:"You never should read this in browser.", parent:"#myJSom", atts:{"href": "http://programming-motherfucker.com"}});
+				// what's the bean?
+				console.log(bean);
+				// Changing the bean.
+				bean.html = "You should be able to read this.";
+				// "Append" the bean
+				var myJSOM = jsom.append(bean);
+				bean.html += " Updated lately.";
+				myJSOM.update();
+				myJSOM.elem.innerHTML = myJSOM.elem.innerHTML + " Aren't you?";
+				
+				jsom.node("#myJSom").style({"color":"red","background":"yellow", "font-size":"20px"}).append({'tag':'div','html':'Hello append'});
+				jsom.each(".jsom", function(arg) {
+					arg.style({"color": "blue"});
+				});
+				jsom.each(".jsom", function(arg) {
+					arg.elem.style.background="green";
+				});	
+			});
+			$(document).ready(function()  {
+				alert("starting jQuery actions");
+				$("#myJQ").myAddedFunctionJQ();
+				$("body").append("<div id='uglyjQueryId'>Hello jQuery</div>");
+				$("#uglyjQueryId").append("<span>, we add just this to you the ugly way</span>");
+				// Well... Somehow the above operations are not possible the easy way.
+				$("#myJQ").append("<a href='http://programming-motherfucker.com'>Well... Somehow the above operations are not possible the easy way</a>");
+				$("#myJQ").css({"color":"red","background":"yellow", "font-size":"20px"}).append("<div>Hello append (no handle???)</div>");
+				$(".jq").each(function() {
+					$(this).css({"color": "blue"});
+				});
+				$(".jq").each(function() {
+					this.style.background="green";
+				});
+				
+			});
+			
+		</script>
+		<style>
+			div {margin:4px;}
+			a {display:block;}
+		</style>
+	</head>
+	<body>
+		<div class="container" id="JSOM_CONTAINER">
+			<div id="myJSom">Click me</div>
+			<div class="jsom">feuerzeug 1</div>
+			<div class="jsom">feuerzeug 2</div>
+			<div class="jsom">feuerzeug 3</div>
+			<div class="jsom">feuerzeug 4</div>
+		</div>
+		<div class="container" id="JQ_CONTAINER">
+			<div id="myJQ">Click me</div>
+			<div class="jq">feuerzeug 1</div>
+			<div class="jq">feuerzeug 2</div>
+			<div class="jq">feuerzeug 3</div>
+			<div class="jq">feuerzeug 4</div>
+		</div>
+		<div>#######################</div>
+	</body>
+	<script>
+
+
+
+		
+	</script>
+</html>
