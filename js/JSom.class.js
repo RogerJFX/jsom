@@ -193,7 +193,7 @@
 	 * @param {} json
 	 * @return ThisExpression
 	 */
-	_node_.prototype.style = function(json) {
+	Node_.prototype.style = function(json) {
 		setStyleBulk(this.elem, json);
 		return this;
 	};
@@ -203,7 +203,7 @@
 	 * @param {} json
 	 * @return ThisExpression
 	 */
-	_node_.prototype.append = function(json) {
+	Node_.prototype.append = function(json) {
 		json.parent = this.elem;
 		me.append(json);
 		return this;
@@ -216,7 +216,7 @@
 	 * @return 
 	 */
 	me.addNodeFunction = function(name, func) {
-		_node_.prototype[name] = func;
+		Node_.prototype[name] = func;
 	};
 	var _arg = {
 		/* jshint -W030 */
