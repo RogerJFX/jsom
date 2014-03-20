@@ -7,6 +7,15 @@
 		<script type="text/javascript" src="./js/JSom.class.js" ></script>
 		<script type="text/javascript" src="./js/jquery-1.11.0.js" ></script>
 		<script>
+			var Utils = {
+				addEventListener : function (itarget, iEvent, method) {
+					if(window.addEventListener) { // Mozilla
+						itarget.addEventListener(iEvent, method, false);
+					} else if(window.attachEvent && method !== null && typeof method != 'undefined') { // F IE
+						itarget.attachEvent("on" + iEvent, method);
+					}
+				}
+			};
 			// First we create an additional function (Jsom)
 			jsom.addNodeFunction("myAddedFunction", function() {
 				// Setting some style using jsom node
@@ -14,9 +23,9 @@
 				// Setting some style using the html element
 				this.elem.style.textDecoration="underline";
 				// onclick
-				this.elem.onclick=function() {
+				this.addEvent("click", function() {
 					alert("You just clicked that div");
-				};
+				});
 				// Ok, maybe we should add "click" asf. to JSom
 				this.elem.addEventListener("click", function(){
 					alert("You just clicked that div 2");},
@@ -28,12 +37,12 @@
 				$(this[0]).css({"font-weight": "bold"});
 				this[0].style.textDecoration="underline";
 				$(this[0]).click(function(){
-					alert("You just clicked that div")
+					alert("You just clicked that div");
 				});
 				$(this[0]).click(function(){
-					alert("You just clicked that div 2")
+					alert("You just clicked that div 2");
 				});
-			}
+			};
 			// ##############################################
 			// ##############################################
 			Utils.addEventListener(window, "load", function() {

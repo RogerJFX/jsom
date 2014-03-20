@@ -11,6 +11,9 @@
  * @Author Roger F. Hösl
  */
 ( function JSom(me) {"use strict";
+	var trimString = function(str) {
+		return str.replace (/^\s+/, '').replace (/\s+$/, '');
+	};
 	/**
 	 * Private error message.
 	 */
@@ -183,9 +186,19 @@
 		this.elem = elem;
 		this.bean = json;
 		this.update = function() {
-			this.elem.innerHTML = this.bean.html;
+			this.html(this.bean.html);
 			//TODO update more Attributes
 		};
+	};
+	/**
+	 * Setting attributes from json.
+	 * @method atts
+	 * @param {Object} json
+	 * @return ThisExpression
+	 */
+	Node_.prototype.atts = function(json) {
+		setAttributeBulk(this.elem, json);
+		return this;
 	};
 	/**
 	 * Description
@@ -197,6 +210,41 @@
 		setStyleBulk(this.elem, json);
 		return this;
 	};
+	Node_.prototype.removeClazz = function(strClass) {
+		var clazz = this.elem.getAttribute("class");
+		if(clazz != null) {
+			var arr = clazz.split(" ");
+			var nClazz = "";
+			for (var i = 0; i < arr.length; i++) {
+				if(arr[i] != strClass) {
+					nClazz += arr[i] + " ";
+				}
+			}
+			this.elem.removeAttribute("class");
+			this.elem.setAttribute("class", trimString(nClazz));
+		}
+		return this;
+	};
+	Node_.prototype.addClazz = function(strClass) {
+		strClass = trimString(strClass);
+		var clazz = this.elem.getAttribute("class");
+		if(clazz != null && clazz.length > 0 && clazz.indexOf(strClass) < 0) {
+			clazz += " " + strClass;
+		} else {
+			clazz = strClass ;
+		}
+		this.elem.removeAttribute("class");
+		this.elem.setAttribute("class", clazz);
+		return this;
+	};
+	Node_.prototype.isClazz = function(strClass) {
+		var clazz = this.elem.getAttribute("class");
+		return clazz.indexOf(strClass) !== -1;
+	};
+	Node_.prototype.html = function(html) {
+		this.elem.innerHTML = html;
+		return this;
+	};
 	/**
 	 * Description
 	 * @method append
@@ -206,6 +254,22 @@
 	Node_.prototype.append = function(json) {
 		json.parent = this.elem;
 		me.append(json);
+		return this;
+	};
+	Node_.prototype.addEvent = function(strEvent, func) {
+		if(this.elem.addEventListener) { // Mozilla
+			this.elem.addEventListener(strEvent, func, false);
+		} else if(this.elem.attachEvent) { // F IE
+			this.elem.attachEvent("on" + strEvent, func);
+		}
+		return this;
+	};
+	Node_.prototype.removeEvent = function(strEvent, func) {
+		if(this.elem.removeEventListener) { // Mozilla
+			this.elem.removeEventListener(strEvent, func, false);
+		} else if(this.elem.detachEvent) { // F IE
+			this.elem.detachEvent("on" + strEvent, func);
+		}
 		return this;
 	};
 	/**
@@ -248,9 +312,11 @@
 			var key;
 			for (key in inp) {
 				if ( typeof this._bean[key] === 'undefined') {
-					throw "Exception: unknown arg " + key;
+					return false;
+					//throw "Exception: unknown arg " + key;
 				}
 			}
+			return true;
 		}
 	};
 	// Just for the helper "toString"
@@ -265,90 +331,3 @@
 	});
 	
 }(this.jsom = this.jsom || {}));
-
-var Utils = {
-	/**
-	 * Description
-	 * @method hasClassAttribute
-	 * @param {Object} node
-	 * @param {String} strClassAtt
-	 * @return BinaryExpression
-	 */
-	hasClassAttribute : function(node, strClassAtt) {
-		var clazz = node.getAttribute("class");
-		return clazz.indexOf(strClassAtt) !== -1;
-	},
-	/**
-	 * Description
-	 * @method removeClassAttribute
-	 * @param {Object} node
-	 * @param {String} strClassAtt
-	 * @return void
-	 */
-	removeClassAttribute : function (node, strClassAtt) {
-		var clazz = node.getAttribute("class");
-		if(clazz !== null) {
-			var arr = clazz.split(" ");
-			var nClazz = "";
-			for (var i = 0; i < arr.length; i++) {
-				if(arr[i] != strClassAtt) {
-					nClazz += arr[i] + " ";
-				}
-			}
-			node.removeAttribute("class");
-			nClazz = nClazz.trim();
-			node.setAttribute("class", nClazz);
-		}
-	},
-	/**
-	 * Description
-	 * @method removeClassAttributeForClass
-	 * @param {String} forClass
-	 * @param {String} strClassAtt
-	 * @return void
-	 */
-	removeClassAttributeForClass : function (forClass, strClassAtt) {
-		var nodes = document.querySelectorAll("." + forClass);
-		var i;
-		for (i = 0; i < nodes.length; i++) {
-			Utils.removeClassAttribute(nodes[i], strClassAtt);
-		}
-	},
-	/**
-	 * Description
-	 * @method addClassAttribute
-	 * @param {Object} node
-	 * @param {String} strClassAtt
-	 * @return void
-	 */
-	addClassAttribute : function (node, strClassAtt) {
-		strClassAtt = strClassAtt.trim();
-		if(node === null) {
-			return false;
-		}
-		var clazz = node.getAttribute("class");
-		if(clazz !== null && clazz.length > 0 && clazz.indexOf(strClassAtt) < 0) {
-			clazz += " " + strClassAtt;
-		} else {
-			clazz =strClassAtt ;
-		}
-		node.removeAttribute("class");
-		node.setAttribute("class", clazz);
-	},
-	/**
-	 * Description
-	 * @method addEventListener
-	 * @param {Object} iTarget
-	 * @param {String} iEvent
-	 * @param {Function} method
-	 * @return void
-	 */
-	addEventListener : function (iTarget, iEvent, method) {
-		if(window.addEventListener) { // reasonable browsers
-			iTarget.addEventListener(iEvent, method, false);
-		} else if(window.attachEvent && method !== null && typeof method != 'undefined') { 
-			iTarget.attachEvent("on" + iEvent, method);
-		}
-	}
-};
-	
