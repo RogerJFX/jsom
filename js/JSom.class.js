@@ -73,7 +73,7 @@
 		if (!validated || typeof validated !== 'boolean') {
 			_arg.validate(json);
 		}
-		if (json.tag === null) {
+		if (json.tag == null) {
 			throw ERROR_NO_TAGNAME;
 		}
 		var elem = document.createElement(json.tag.toUpperCase());
@@ -87,9 +87,12 @@
 		if (json.value) {
 			elem.value = json.value;
 		}
-		var att, i;
+		//var att, i;
 		if (json.atts !== null && typeof json.atts !== 'undefined') {
 			setAttributeBulk(elem, json.atts);
+		}
+		if (json.style !== null && typeof json.style !== 'undefined') {
+			setStyleBulk(elem, json.style);
 		}
 		//json = null;
 		return new Node_(elem, json);
@@ -115,8 +118,20 @@
 	 */
 	me.node = function(arg) {
 		var n = arg ? _get(arg) : null;
+		if(n === null) 
+			return null;
+		if(n.length) {
+			var result = [], i;
+			for (i = 0; i < n.length; i++) {
+				result.push(new Node_(n[i]));
+			}
+			return result;
+		}
 		var result = new Node_(n);
 		return result;
+	};
+	me.wrap = function(node) {
+		return new Node_(node);
 	};
 	/**
 	 * Description
@@ -177,7 +192,7 @@
 		return JSON.stringify(_arg._bean);
 	};
 	/**
-	 * Description
+	 * Ctor.
 	 * @method _node_
 	 * @param {} elem
 	 * @return 
@@ -230,9 +245,8 @@
 		var clazz = this.elem.getAttribute("class");
 		if(clazz != null && clazz.length > 0 && clazz.indexOf(strClass) < 0) {
 			clazz += " " + strClass;
-		} else {
-			clazz = strClass ;
-		}
+		} 
+
 		this.elem.removeAttribute("class");
 		this.elem.setAttribute("class", clazz);
 		return this;
@@ -245,6 +259,10 @@
 		this.elem.innerHTML = html;
 		return this;
 	};
+	Node_.prototype.value = function(value) {
+		this.elem.value = value;
+		return this;
+	};
 	/**
 	 * Description
 	 * @method append
@@ -254,6 +272,19 @@
 	Node_.prototype.append = function(json) {
 		json.parent = this.elem;
 		me.append(json);
+		return this;
+	};
+	Node_.prototype.appendNode = function(other) {
+		this.elem.appendChild(other.elem);
+		return this;
+	};
+	Node_.prototype.prependNode = function(other) {
+		var fc = this.elem.firstChild;
+		if(fc) {
+			this.elem.insertBefore(other.elem, fc);
+		} else {
+			this.elem.appendChild(other.elem);
+		}
 		return this;
 	};
 	Node_.prototype.addEvent = function(strEvent, func) {
@@ -327,7 +358,9 @@
 		"html" : "innerHtml",
 		"value" : "value for input",
 		"parent" : "parent node",
-		"atts" : [["key1", "value1"], ["keyN", "valueN"]]
+		"atts" : {"key1" : "value1", "keyN" : "valueN"}
 	});
 	
 }(this.jsom = this.jsom || {}));
+
+	
