@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Canvas</title>
+    <script>
+        /*
+        var ImageData = {
+            dimension: [100, 100],
+            background:"#eeeeee",
+            colors : [
+                "#ff0000",
+                "#000000",
+                "#0000ff",
+                "#00ff00"
+            ],
+            index: [
+                [0, 0],
+                [20, 3],
+                [119, 1],
+                [120, 2],
+                [9019, 0],
+                [9030, 3]
+            ]
+        };
+
+        var RawData = [
+            [1,2, 3, 4, 5, 6, 7, 8, 135],
+            [2, 3, 4, 5, 6, 7, 8, 135, 23],
+            [3, 4, 5, 6, 7, 8, 135, 23, 12],
+            [3, 4, 5, 6, 7, 8, 135, 23, 12],
+            [3, 3, 3, 3, 3, 3, 3, 2, 2],
+            [3, 4, 5, 6, 7, 8, -315, 23, 12]
+        ];*/
+
+        var ImageDataCreator = function(rawData, colorRaster) {
+
+            function max() {
+                var i, j;
+                var max = Number.MIN_VALUE;
+                for (i = 0; i < rawData.length; i++) {
+                    for (j = 0; j < rawData[0].length; j++) {
+                        if(rawData[i][j] > max) {
+                            max = rawData[i][j];
+                        }
+                    }
+                }
+                return max;
+            }
+
+            function min() {
+                var i, j;
+                var min = Number.MAX_VALUE;
+                for (i = 0; i < rawData.length; i++) {
+                    for (j = 0; j < rawData[0].length; j++) {
+                        if(rawData[i][j] < min) {
+                            min = rawData[i][j];
+                        }
+                    }
+                }
+                return min;
+            }
+
+            this.create = function() {
+                var colRaster = colorRaster || 255;
+                var result = {
+                    dimension: [rawData[0].length, rawData.length],
+                    background:"#ffffff",
+                    colors: [],
+                    index: []
+                };
+                var i, j, a, candidate;
+                for (i = colRaster; i >= 0; i--) {
+                    a = i * Math.floor(255 / colorRaster);
+                    candidate = (a << 16 | a << 8 | a).toString(16);
+                    while (candidate.length < 6) {
+                        candidate = "0" + candidate;
+                    }
+                    result.colors.push("#" +candidate);
+                }
+
+                var minValue = min();
+                var raster = colRaster / (max() - minValue);
+                var value = -1, tmp;
+                var lineLen = rawData[0].length;
+                for (i = 0; i < rawData.length; i++) {
+                    for (j = 0; j < lineLen; j++) {
+                        tmp = Math.floor((rawData[i][j] - minValue) * raster);
+                        if (tmp > colRaster) {
+                            tmp = colRaster;
+                        } else if (tmp < 0) {
+                            tmp = 0;
+                        }
+                        if(tmp !== value) {
+                            value = tmp;
+                            result.index.push([i*lineLen + j, value]);
+                        }
+                    }
+                }
+                console.log("indices: " + result.index.length);
+                return result;
+            }
+
+        };
+
+        var CanvasPainter = function(imageData, dpp, node) {
+            // console.log(imageData);
+            var width, height, ctx;
+            var last = null;
+            var cursorPos = 0;
+            // tmp vars for function nextLine
+            var x, y, w, delta;
+
+            (function init(imageData, canvasFns) {
+                var canvas = document.createElement("CANVAS");
+                ctx = canvas.getContext("2d");
+                width = imageData.dimension[0];
+                height = imageData.dimension[1];
+                canvas.width = imageData.dimension[0] * dpp;
+                canvas.height = imageData.dimension[1] * dpp;
+                //node.appendChild(canvas);
+                for (var i = 0; i < canvasFns.length; i++) {
+                    canvasFns[i](canvas);
+                }
+                //addEventListeners(canvas);
+                if(imageData.background) {
+                    ctx.fillStyle = imageData.background;
+                    ctx.fillRect(0,0,width,height);
+                }
+            })(imageData, [addEventListeners, appendCanvas]);
+
+            function appendCanvas(canvas) {
+                node.appendChild(canvas);
+            }
+
+            function addEventListeners(canvas) {
+                canvas.addEventListener("click", function(ev) {
+                    var evt = ev || window.event;
+                    var mouseX = evt.clientX - canvas.offsetLeft + window.scrollX;
+                    var mouseY = evt.clientY - canvas.offsetTop + window.scrollY;
+                    console.log("x|y: " +Math.floor(mouseX/dpp) + "|" + Math.floor(mouseY/dpp));
+                }, false);
+            }
+
+            var Line = function (y, x, w, color) {
+                this.y = y;
+                this.x = x;
+                this.w = w;
+                this.color = color;
+            };
+
+            this.paint = function() {
+                var line = new Line(0, 0, 0, null);
+                last = findChange(0);
+                while((line = nextLine(line)) !== null) {
+                    paintLine(line);
+                }
+            };
+
+            function paintLine(line) {
+                    ctx.fillStyle = line.color;
+                    ctx.fillRect(line.x * dpp, line.y * dpp, line.w * dpp, dpp);
+            }
+
+            function findChange(pos) {
+                for (var i = 0; i < imageData.index.length; i++) {
+                    if(imageData.index[i][0] > pos) {
+                        return {
+                            len : imageData.index[i][0],
+                            color : imageData.colors[imageData.index[i-1][1]]
+                        }
+                    }
+                }
+                return {
+                    len : Number.MAX_VALUE,
+                    color : imageData.colors[imageData.index[imageData.index.length-1][1]]
+                }
+            }
+
+            function nextLine(line) {
+                 y = line.y;
+                 x = line.x + line.w;
+                if(x === width) {
+                    if(++y === height) {
+                        return null;
+                    }
+                    x = 0;
+                }
+                if(cursorPos >= last.len) {
+                    last = findChange(cursorPos);
+                }
+                 w = last.len - cursorPos;
+                 delta = width - x;
+                if(w > delta) {
+                    w = delta;
+                }
+                cursorPos += w;
+                return new Line(y, x, w, last.color);
+            }
+            // end CanvasPainter class
+        };
+
+        window.addEventListener("load", function() {
+            var data = [];
+            for (var i = 0; i < 400; i++) {
+                var iData = [];
+                for (var j = 0; j < 600; j++) {
+                    iData.push(i + j);
+                }
+                data.push(iData);
+            }
+            var imageData;
+            var colors = 255;
+            var dotsPerPixel = 1;
+            time("raster (" + colors + " colors)", function() {
+                imageData = new ImageDataCreator(data, colors).create();
+            });
+            time("paint (dpp: "+ dotsPerPixel + ")", function() {
+                new CanvasPainter(imageData, dotsPerPixel, document.getElementById("chart")).paint();
+            });
+        }, false);
+
+        function time(name, fn) {
+            var t1 = new Date().getTime();
+            fn();
+            console.log(name + " done " + (new Date().getTime() - t1) + " millis");
+        }
+
+        function clearDiv() {
+            document.getElementById("chart").innerHTML = "";
+        }
+
+        function test() {
+            var data = document.forms[0].data.value;
+            var dpp = document.forms[0].dpp.value;
+            var colors =  document.forms[0].colors.value;
+            if(colors > 255) {
+                colors = 255;
+                console.log("colors < 256, please");
+            }
+            time("paint", function() {
+                new CanvasPainter(new ImageDataCreator(JSON.parse(data), colors).create(), dpp, document.getElementById("chart")).paint();
+            });
+        }
+    </script>
+</head>
+<body>
+    <div style="background:red" id="chart"></div>
+    <form action='javascript:clearDiv();test();'>
+        <div><textarea name="data" style="width:600px;height:200px;">[
+    [1,2, 3, 4, 5, 6, 7, 8, 135],
+    [2, 3, 4, 5, 6, 7, 8, 135, 23],
+    [3, 4, 5, 6, 7, 8, 135, 23, 12],
+    [3, 4, 5, 6, 7, 8, 135, 23, 12],
+    [3, 3, 3, 3, 3, 3, 3, 2, 2],
+    [3, 4, 5, 6, 7, 8, -315, 23, 12]
+]
+</textarea></div>
+        <div>dpp: <input name="dpp" type="number" value="1"/></div>
+        <div>colors: <input name="colors" type="number" value="127"/></div>
+        <div><input type="submit" /></div>
+    </form>
+</body>
+</html>
