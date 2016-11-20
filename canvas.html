@@ -5,42 +5,42 @@
     <title>Canvas</title>
     <script>
         /*
-        var ImageData = {
-            dimension: [100, 100],
-            background:"#eeeeee",
-            colors : [
-                "#ff0000",
-                "#000000",
-                "#0000ff",
-                "#00ff00"
-            ],
-            index: [
-                [0, 0],
-                [20, 3],
-                [119, 1],
-                [120, 2],
-                [9019, 0],
-                [9030, 3]
-            ]
-        };
+         var ImageData = {
+         dimension: [100, 100],
+         background:"#eeeeee",
+         colors : [
+         "#ff0000",
+         "#000000",
+         "#0000ff",
+         "#00ff00"
+         ],
+         index: [
+         [0, 0],
+         [20, 3],
+         [119, 1],
+         [120, 2],
+         [9019, 0],
+         [9030, 3]
+         ]
+         };
 
-        var RawData = [
-            [1,2, 3, 4, 5, 6, 7, 8, 135],
-            [2, 3, 4, 5, 6, 7, 8, 135, 23],
-            [3, 4, 5, 6, 7, 8, 135, 23, 12],
-            [3, 4, 5, 6, 7, 8, 135, 23, 12],
-            [3, 3, 3, 3, 3, 3, 3, 2, 2],
-            [3, 4, 5, 6, 7, 8, -315, 23, 12]
-        ];*/
+         var RawData = [
+         [1,2, 3, 4, 5, 6, 7, 8, 135],
+         [2, 3, 4, 5, 6, 7, 8, 135, 23],
+         [3, 4, 5, 6, 7, 8, 135, 23, 12],
+         [3, 4, 5, 6, 7, 8, 135, 23, 12],
+         [3, 3, 3, 3, 3, 3, 3, 2, 2],
+         [3, 4, 5, 6, 7, 8, -315, 23, 12]
+         ];*/
 
-        var ImageDataCreator = function(rawData, colorRaster) {
+        var ImageDataCreator = function (rawData, colorRaster) {
 
             function max() {
                 var i, j;
                 var max = Number.MIN_VALUE;
                 for (i = 0; i < rawData.length; i++) {
                     for (j = 0; j < rawData[0].length; j++) {
-                        if(rawData[i][j] > max) {
+                        if (rawData[i][j] > max) {
                             max = rawData[i][j];
                         }
                     }
@@ -53,7 +53,7 @@
                 var min = Number.MAX_VALUE;
                 for (i = 0; i < rawData.length; i++) {
                     for (j = 0; j < rawData[0].length; j++) {
-                        if(rawData[i][j] < min) {
+                        if (rawData[i][j] < min) {
                             min = rawData[i][j];
                         }
                     }
@@ -61,11 +61,11 @@
                 return min;
             }
 
-            this.create = function() {
+            this.create = function () {
                 var colRaster = colorRaster || 255;
                 var result = {
                     dimension: [rawData[0].length, rawData.length],
-                    background:"#ffffff",
+                    background: "#ffffff",
                     colors: [],
                     index: []
                 };
@@ -76,7 +76,7 @@
                     while (candidate.length < 6) {
                         candidate = "0" + candidate;
                     }
-                    result.colors.push("#" +candidate);
+                    result.colors.push("#" + candidate);
                 }
 
                 var minValue = min();
@@ -91,9 +91,9 @@
                         } else if (tmp < 0) {
                             tmp = 0;
                         }
-                        if(tmp !== value) {
+                        if (tmp !== value) {
                             value = tmp;
-                            result.index.push([i*lineLen + j, value]);
+                            result.index.push([i * lineLen + j, value]);
                         }
                     }
                 }
@@ -103,7 +103,7 @@
 
         };
 
-        var CanvasPainter = function(imageData, dpp, node) {
+        var CanvasPainter = function (imageData, dpp, node) {
             // console.log(imageData);
             var width, height, ctx;
             var last = null;
@@ -123,9 +123,9 @@
                     canvasFns[i](canvas);
                 }
                 //addEventListeners(canvas);
-                if(imageData.background) {
+                if (imageData.background) {
                     ctx.fillStyle = imageData.background;
-                    ctx.fillRect(0,0,width,height);
+                    ctx.fillRect(0, 0, width, height);
                 }
             })(imageData, [addEventListeners, appendCanvas]);
 
@@ -134,11 +134,11 @@
             }
 
             function addEventListeners(canvas) {
-                canvas.addEventListener("click", function(ev) {
+                canvas.addEventListener("click", function (ev) {
                     var evt = ev || window.event;
                     var mouseX = evt.clientX - canvas.offsetLeft + window.scrollX;
                     var mouseY = evt.clientY - canvas.offsetTop + window.scrollY;
-                    console.log("x|y: " +Math.floor(mouseX/dpp) + "|" + Math.floor(mouseY/dpp));
+                    console.log("x|y: " + Math.floor(mouseX / dpp) + "|" + Math.floor(mouseY / dpp));
                 }, false);
             }
 
@@ -149,58 +149,59 @@
                 this.color = color;
             };
 
-            this.paint = function() {
+            this.paint = function () {
                 var line = new Line(0, 0, 0, null);
                 last = findChange(0);
-                while((line = nextLine(line)) !== null) {
+                while ((line = nextLine(line)) !== null) {
                     paintLine(line);
                 }
             };
 
             function paintLine(line) {
-                    ctx.fillStyle = line.color;
-                    ctx.fillRect(line.x * dpp, line.y * dpp, line.w * dpp, dpp);
+                ctx.fillStyle = line.color;
+                ctx.fillRect(line.x * dpp, line.y * dpp, line.w * dpp, dpp);
             }
 
             function findChange(pos) {
                 for (var i = 0; i < imageData.index.length; i++) {
-                    if(imageData.index[i][0] > pos) {
+                    if (imageData.index[i][0] > pos) {
                         return {
-                            len : imageData.index[i][0],
-                            color : imageData.colors[imageData.index[i-1][1]]
+                            len: imageData.index[i][0],
+                            color: imageData.colors[imageData.index[i - 1][1]]
                         }
                     }
                 }
                 return {
-                    len : Number.MAX_VALUE,
-                    color : imageData.colors[imageData.index[imageData.index.length-1][1]]
+                    len: Number.MAX_VALUE,
+                    color: imageData.colors[imageData.index[imageData.index.length - 1][1]]
                 }
             }
 
             function nextLine(line) {
-                 y = line.y;
-                 x = line.x + line.w;
-                if(x === width) {
-                    if(++y === height) {
+                y = line.y;
+                x = line.x + line.w;
+                if (x === width) {
+                    if (++y === height) {
                         return null;
                     }
                     x = 0;
                 }
-                if(cursorPos >= last.len) {
+                if (cursorPos >= last.len) {
                     last = findChange(cursorPos);
                 }
-                 w = last.len - cursorPos;
-                 delta = width - x;
-                if(w > delta) {
+                w = last.len - cursorPos;
+                delta = width - x;
+                if (w > delta) {
                     w = delta;
                 }
                 cursorPos += w;
                 return new Line(y, x, w, last.color);
             }
+
             // end CanvasPainter class
         };
 
-        window.addEventListener("load", function() {
+        window.addEventListener("load", function () {
             var data = [];
             for (var i = 0; i < 400; i++) {
                 var iData = [];
@@ -210,12 +211,12 @@
                 data.push(iData);
             }
             var imageData;
-            var colors = 255;
+            var colors = 127;
             var dotsPerPixel = 1;
-            time("raster (" + colors + " colors)", function() {
+            time("raster (" + colors + " colors)", function () {
                 imageData = new ImageDataCreator(data, colors).create();
             });
-            time("paint (dpp: "+ dotsPerPixel + ")", function() {
+            time("paint (dpp: " + dotsPerPixel + ")", function () {
                 new CanvasPainter(imageData, dotsPerPixel, document.getElementById("chart")).paint();
             });
         }, false);
@@ -233,21 +234,21 @@
         function test() {
             var data = document.forms[0].data.value;
             var dpp = document.forms[0].dpp.value;
-            var colors =  document.forms[0].colors.value;
-            if(colors > 255) {
+            var colors = document.forms[0].colors.value;
+            if (colors > 255) {
                 colors = 255;
                 console.log("colors < 256, please");
             }
-            time("paint", function() {
+            time("paint", function () {
                 new CanvasPainter(new ImageDataCreator(JSON.parse(data), colors).create(), dpp, document.getElementById("chart")).paint();
             });
         }
     </script>
 </head>
 <body>
-    <div style="background:red" id="chart"></div>
-    <form action='javascript:clearDiv();test();'>
-        <div><textarea name="data" style="width:600px;height:200px;">[
+<div style="background:red" id="chart"></div>
+<form action='javascript:clearDiv();test();'>
+    <div><textarea name="data" style="width:600px;height:200px;">[
     [1,2, 3, 4, 5, 6, 7, 8, 135],
     [2, 3, 4, 5, 6, 7, 8, 135, 23],
     [3, 4, 5, 6, 7, 8, 135, 23, 12],
@@ -256,9 +257,9 @@
     [3, 4, 5, 6, 7, 8, -315, 23, 12]
 ]
 </textarea></div>
-        <div>dpp: <input name="dpp" type="number" value="1"/></div>
-        <div>colors: <input name="colors" type="number" value="127"/></div>
-        <div><input type="submit" /></div>
-    </form>
+    <div>dpp: <input name="dpp" type="number" value="1"/></div>
+    <div>colors: <input name="colors" type="number" value="127"/></div>
+    <div><input type="submit"/></div>
+</form>
 </body>
 </html>
