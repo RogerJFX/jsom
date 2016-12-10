@@ -33,7 +33,8 @@
          [3, 4, 5, 6, 7, 8, -315, 23, 12]
          ];*/
 
-        var ImageDataCreator = function (rawData, colorRaster) {
+        var ImageDataCreator = function (rawData, linear, colorRaster) {
+            var colRaster = colorRaster || 255;
 
             function max() {
                 var i, j;
@@ -60,25 +61,46 @@
                 }
                 return min;
             }
-
+            function trimCandidate(a) {
+                var candidate = (a << 16 | a << 8 | a).toString(16);
+                while (candidate.length < 6) {
+                    candidate = "0" + candidate;
+                }
+                return candidate;
+            }
+            function sinusQRaster(result) {
+                var i, a, candidate;
+                var factor = Math.floor(255 / colRaster);
+                for (i = 0; i < colRaster; i++) {
+                    a = i * factor;
+                    a=Math.round(255*Math.sin(-a/255*Math.PI / 2)+255);
+                    candidate = trimCandidate(a);
+                    result.colors.push("#" + candidate);
+                }
+            }
+            function linearQRaster(result) {
+                var i, a, candidate;
+                var factor = Math.floor(255 / colRaster);
+                for (i = colRaster; i >= 0; i--) {
+                    a = i * factor;
+                    candidate = trimCandidate(a);
+                    result.colors.push("#" + candidate);
+                }
+            }
             this.create = function () {
-                var colRaster = colorRaster || 255;
                 var result = {
                     dimension: [rawData[0].length, rawData.length],
                     background: "#ffffff",
                     colors: [],
                     index: []
                 };
-                var i, j, a, candidate;
-                for (i = colRaster; i >= 0; i--) {
-                    a = i * Math.floor(255 / colorRaster);
-                    candidate = (a << 16 | a << 8 | a).toString(16);
-                    while (candidate.length < 6) {
-                        candidate = "0" + candidate;
-                    }
-                    result.colors.push("#" + candidate);
+                if(linear) {
+                    linearQRaster(result);
+                } else {
+                    sinusQRaster(result);
                 }
 
+                var j;
                 var minValue = min();
                 var raster = colRaster / (max() - minValue);
                 var value = -1, tmp;
@@ -205,7 +227,7 @@
             var data = [];
             for (var i = 0; i < 400; i++) {
                 var iData = [];
-                for (var j = 0; j < 600; j++) {
+                for (var j = 0; j < 400; j++) {
                     iData.push(i + j);
                 }
                 data.push(iData);
@@ -214,7 +236,7 @@
             var colors = 127;
             var dotsPerPixel = 1;
             time("raster (" + colors + " colors)", function () {
-                imageData = new ImageDataCreator(data, colors).create();
+                imageData = new ImageDataCreator(data, false, colors).create();
             });
             time("paint (dpp: " + dotsPerPixel + ")", function () {
                 new CanvasPainter(imageData, dotsPerPixel, document.getElementById("chart")).paint();
@@ -240,7 +262,7 @@
                 console.log("colors < 256, please");
             }
             time("paint", function () {
-                new CanvasPainter(new ImageDataCreator(JSON.parse(data), colors).create(), dpp, document.getElementById("chart")).paint();
+                new CanvasPainter(new ImageDataCreator(JSON.parse(data), false, colors).create(), dpp, document.getElementById("chart")).paint();
             });
         }
     </script>
